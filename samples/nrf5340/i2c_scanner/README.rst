@@ -5,8 +5,8 @@ i2c Scanner
 
 --- Disclaimer: this is not an official nRF Connect SDK example ---
 
-This example shows how i2c can be enabled and used in the Zephyr environment for the nRF9160 and nRF5340. It is based on 
-`this <https://github.com/sigurdnev/fw-nrfconnect-nrf/tree/master/samples/nrf9160/i2c_scanner>`_ sample. 
+This example shows how i2c can be enabled and used in the Zephyr environment for the nRF5340. It is based on 
+`this sample <https://github.com/sigurdnev/fw-nrfconnect-nrf/tree/master/samples/nrf9160/i2c_scanner>`_ (for the nRF9160). 
 
 Overview
 ********
@@ -19,9 +19,4 @@ Requirements
 
 * One of the following development boards:
 
-  * nRF9160DK or nRF5340PDK
-
-Building and running
-********************
-
-.. |sample path| replace:: :file:`samples/nRF5340/i2c_scanner`
+  * nRF5340PDK
