@@ -32,9 +32,9 @@ void main(void)
     }
     i2c_configure(i2c_dev, I2C_SPEED_SET(I2C_SPEED_STANDARD));
 
-    printk("Value of NRF_TWIM1_NS->PSEL.SCL : %d \n",NRF_TWIM1_NS->PSEL.SCL);
-	printk("Value of NRF_TWIM1_NS->PSEL.SDA : %d \n",NRF_TWIM1_NS->PSEL.SDA);
-	printk("Value of NRF_TWIM1_NS->FREQUENCY: %d \n",NRF_TWIM1_NS->FREQUENCY);
+    printk("Value of NRF_TWIM1_NS->PSEL.SCL : %d \n",NRF_TWIM1->PSEL.SCL);
+	printk("Value of NRF_TWIM1_NS->PSEL.SDA : %d \n",NRF_TWIM1->PSEL.SDA);
+	printk("Value of NRF_TWIM1_NS->FREQUENCY: %d \n",NRF_TWIM1->FREQUENCY);
 	printk("26738688 -> 100k\n");
         
     for (uint8_t i = 4; i <= 0x77; i++) {

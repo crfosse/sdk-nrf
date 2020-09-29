@@ -6,8 +6,6 @@
 
 cmake_minimum_required(VERSION 3.8.2)
 
-#set (spm_DTS_OVERLAY_FILE ${cmake_current_source_dir}/nrf5340pdk_nrf5340_cpuappns.overlay)
-
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(NONE)
 
