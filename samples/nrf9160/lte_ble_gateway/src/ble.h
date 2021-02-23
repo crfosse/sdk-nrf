@@ -8,5 +8,6 @@
 #define _BLE_H_
 
 void ble_init(void);
+void scan_start(void);
 
 #endif /* _BLE_H_ */

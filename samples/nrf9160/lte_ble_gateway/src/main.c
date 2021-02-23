@@ -325,7 +325,7 @@ static void cloud_event_handler(const struct nrf_cloud_evt *evt)
 			nrf_cloud_error_handler(err);
 		}
 
-		sensors_init();
+		//sensors_init();
 		atomic_set(&send_data_enable, 1);
 		break;
 	case NRF_CLOUD_EVT_SENSOR_ATTACHED:
@@ -403,6 +403,8 @@ static void button_handler(uint32_t buttons, uint32_t has_changed)
 	       "switch 1: %u, switch 2: %u\n",
 	       (bool)(buttons & BUTTON_1), (bool)(buttons & BUTTON_2),
 	       (bool)(buttons & SWITCH_1), (bool)(buttons & SWITCH_2));
+
+	scan_start();	
 }
 
 /**@brief Initializes and submits delayed work. */
