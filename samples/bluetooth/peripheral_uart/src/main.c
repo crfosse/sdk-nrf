@@ -40,7 +40,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define DEVICE_NAME_LEN	(sizeof(DEVICE_NAME) - 1)
 
 #define RUN_STATUS_LED DK_LED1
-#define RUN_LED_BLINK_INTERVAL 1000
+#define RUN_LED_BLINK_INTERVAL 500
 
 #define CON_STATUS_LED DK_LED2
 
@@ -48,15 +48,26 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define KEY_PASSKEY_REJECT DK_BTN2_MSK
 
 #define UART_BUF_SIZE CONFIG_BT_NUS_UART_BUFFER_SIZE
-#define UART_WAIT_FOR_BUF_DELAY K_MSEC(50)
+#define UART_WAIT_FOR_BUF_DELAY K_MSEC(5)
 #define UART_WAIT_FOR_RX CONFIG_BT_NUS_UART_RX_WAIT_TIME
 
+
+uint8_t * testData = "yK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQ"
+					 "yK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK";
+
+#define TEST_DATA_SIZE 30
+
+
 static K_SEM_DEFINE(ble_init_ok, 0, 1);
+static K_SEM_DEFINE(ble_connected_sem, 0, 1);
+static K_SEM_DEFINE(sensor_start_sem, 0, 1);
 
 static struct bt_conn *current_conn;
 static struct bt_conn *auth_conn;
+static struct bt_gatt_exchange_params exchange_params;
 
 static const struct device *uart;
+
 static struct k_delayed_work uart_work;
 
 struct uart_data_t {
@@ -65,8 +76,15 @@ struct uart_data_t {
 	uint16_t len;
 };
 
+struct ble_data_t {
+	uint8_t data[UART_BUF_SIZE];
+	uint16_t len;
+};
+
 static K_FIFO_DEFINE(fifo_uart_tx_data);
 static K_FIFO_DEFINE(fifo_uart_rx_data);
+static K_FIFO_DEFINE(fifo_ble_tx_data);
+
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -234,6 +252,12 @@ static int uart_init(void)
 	return uart_rx_enable(uart, rx->data, sizeof(rx->data), 50);
 }
 
+static void exchange_func(struct bt_conn *conn, uint8_t att_err,
+			  struct bt_gatt_exchange_params *params)
+{
+	printk("MTU exchange %s\n", att_err == 0 ? "successful" : "failed");
+}
+
 static void connected(struct bt_conn *conn, uint8_t err)
 {
 	char addr[BT_ADDR_LE_STR_LEN];
@@ -249,6 +273,7 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	current_conn = bt_conn_ref(conn);
 
 	dk_set_led_on(CON_STATUS_LED);
+	k_sem_give(&ble_connected_sem);
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
@@ -379,12 +404,21 @@ static struct bt_conn_auth_cb conn_auth_callbacks;
 static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data,
 			  uint16_t len)
 {
+
+	#ifndef HANDLE_DATA
+
+	static int recv_cnt=0;
+	recv_cnt++;
+
+	if (!(recv_cnt%100)) {
+		printk("BLE: has received %d messages\n", recv_cnt);
+	}
+	#elif defined(HANDLE_DATA)
+
 	int err;
 	char addr[BT_ADDR_LE_STR_LEN] = {0};
 
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, ARRAY_SIZE(addr));
-
-	LOG_INF("Received data from: %s", log_strdup(addr));
 
 	for (uint16_t pos = 0; pos != len;) {
 		struct uart_data_t *tx = k_malloc(sizeof(*tx));
@@ -420,6 +454,7 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data,
 			k_fifo_put(&fifo_uart_tx_data, tx);
 		}
 	}
+	#endif
 }
 
 static struct bt_nus_cb nus_cb = {
@@ -535,19 +570,66 @@ void ble_write_thread(void)
 {
 	/* Don't go any further until BLE is initialized */
 	k_sem_take(&ble_init_ok, K_FOREVER);
+	k_sem_take(&ble_connected_sem, K_FOREVER);
 
+	k_sleep(K_SECONDS(5));
+
+	exchange_params.func = exchange_func;
+
+	int err = 0;
+
+	err = bt_gatt_exchange_mtu(current_conn, &exchange_params);
+	if (err) {
+		printk("MTU exchange failed (err %d)\n", err);
+	} else {
+		printk("MTU exchange pending\n");
+	}
+
+	k_sem_give(&sensor_start_sem);
+
+	int msg_cnt = 0;	
+	printk("BLE start");
 	for (;;) {
 		/* Wait indefinitely for data to be sent over bluetooth */
-		struct uart_data_t *buf = k_fifo_get(&fifo_uart_rx_data,
+		struct ble_data_t *buf = k_fifo_get(&fifo_ble_tx_data,
 						     K_FOREVER);
 
-		if (bt_nus_send(NULL, buf->data, buf->len)) {
-			LOG_WRN("Failed to send data over BLE connection");
+		err = bt_nus_send(NULL, buf->data, buf->len);
+		if (err) {
+			LOG_WRN("Failed to send data over BLE connection" 
+				"(err %d)", err);
+		} else {
+			msg_cnt++;
+			if (!(msg_cnt%100)) {
+				LOG_INF("%d messages sucessfully transmitted.\n", msg_cnt);
+			}
 		}
+
+		LOG_DBG("Data sent");
 
 		k_free(buf);
 	}
 }
 
+void sensor_simulator(void) {
+	k_sem_take(&sensor_start_sem, K_FOREVER);
+	
+	printk("Sensor start\n");
+	for(;;) {
+
+		struct ble_data_t *bleDataPtr = k_malloc(sizeof(struct ble_data_t));
+		bleDataPtr->len = TEST_DATA_SIZE;
+		memcpy(bleDataPtr->data, testData, TEST_DATA_SIZE);
+		k_fifo_put(&fifo_ble_tx_data, bleDataPtr);
+
+		LOG_DBG("Sensor data put");
+
+		k_sleep(K_MSEC(5));
+	}
+}
+
 K_THREAD_DEFINE(ble_write_thread_id, STACKSIZE, ble_write_thread, NULL, NULL,
 		NULL, PRIORITY, 0, 0);
+
+K_THREAD_DEFINE(sensor_simulator_id, STACKSIZE, sensor_simulator, NULL, NULL,
+		NULL, PRIORITY+1, 0, 0);
