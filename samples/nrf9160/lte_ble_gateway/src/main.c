@@ -500,14 +500,14 @@ void main(void)
 	ble_init();
 
 	work_init();
-	cloud_init();
-	modem_configure();
-	cloud_connect(NULL);
+	//cloud_init();
+	//modem_configure();
+	//cloud_connect(NULL);
 
 	while (true) {
-		nrf_cloud_process();
-		send_aggregated_data();
-		k_sleep(K_MSEC(10));
-		k_cpu_idle();
+		//nrf_cloud_process();
+		//send_aggregated_data();
+		k_sleep(K_MSEC(1000));
+		//k_cpu_idle();
 	}
 }
