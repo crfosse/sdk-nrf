@@ -11,7 +11,9 @@
 # https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/guides/west/index.html
 
 manifest:
-  version: "0.10"
+  # This west.yml requires west 0.9 or later, because the "submodules"
+  # feature used below was introduced then.
+  version: 0.9
 
   # "remotes" is a list of locations where git repositories are cloned
   # and fetched from.
@@ -33,15 +35,11 @@ manifest:
       url-base: https://github.com/alexa
     - name: nordicsemi
       url-base: https://github.com/NordicSemiconductor
-    - name: pelioniot
-      url-base: https://github.com/PelionIoT
 
   # If not otherwise specified, the projects below should be obtained
   # from the ncs remote.
   defaults:
     remote: ncs
-
-  group-filter: [-homekit, -nrf-802154, -find-my]
 
   # "projects" is a list of git repositories which make up the NCS
   # source code.
@@ -54,12 +52,12 @@ manifest:
     # https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/guides/modules.html
     - name: zephyr
       repo-path: sdk-zephyr
-      revision: 2541c598706e87d0475f650b9a27e89a701c58c6
+      revision: v2.4.99-ncs1
       import:
         # In addition to the zephyr repository itself, NCS also
         # imports the contents of zephyr/west.yml at the above
         # revision. Only the projects explicitly named in the
-        # following allowlist are imported.
+        # following whitelist are imported.
         #
         # Note that the zephyr west extensions (like 'build', 'flash',
         # 'debug', etc.) are automatically provided by this import, so
@@ -67,7 +65,7 @@ manifest:
         # the zephyr project.
         #
         # Please keep this list sorted alphabetically.
-        name-allowlist:
+        name-whitelist:
           - canopennode
           - cmsis
           - civetweb
@@ -85,11 +83,10 @@ manifest:
           - net-tools
           - nrf_hw_models
           - open-amp
+          - openthread
           - segger
-          - tensorflow
           - tinycbor
           - tinycrypt
-          - TraceRecorderSource
 
     # NCS repositories.
     #
@@ -97,28 +94,24 @@ manifest:
     # changes.
     - name: mcuboot
       repo-path: sdk-mcuboot
-      revision: bbca448b64fc7e0e10122dab6909649068c22a0e
+      revision: v1.7.99-ncs1
       path: bootloader/mcuboot
     - name: nrfxlib
       repo-path: sdk-nrfxlib
       path: nrfxlib
-      revision: 949333c181d41fff33c8a0e9081fb708e13ebf24
+      revision: ef9e33ee5c1d5d951d0415f0944fc52a15a55a95
     - name: trusted-firmware-m
       repo-path: sdk-trusted-firmware-m
       path: modules/tee/tfm
-      revision: b53b5d53b6f0b9004ebc27d1997c1a7608e321d5
+      revision: v1.2.99-ncs1
     - name: tfm-mcuboot # This is used by the trusted-firmware-m module.
       repo-path: sdk-mcuboot
       path: modules/tee/tfm-mcuboot
-      revision: v1.7.2
-    - name: openthread
-      repo-path: sdk-openthread
-      path: modules/lib/openthread
-      revision: 9c01aff66245c3989536a8c96dae3c6ec6402d0d
-    - name: matter
+      revision: 81d19f017f18f1bc6bea906d96fd45fba3672064
+    - name: connectedhomeip
       repo-path: sdk-connectedhomeip
-      path: modules/lib/matter
-      revision: dddca7629f68a040e97104a74387b66ca753d715
+      path: modules/lib/connectedhomeip
+      revision: v1.5.0
       submodules:
         - name: nlio
           path: third_party/nlio/repo
@@ -126,12 +119,6 @@ manifest:
           path: third_party/nlassert/repo
         - name: pigweed
           path: third_party/pigweed/repo
-    - name: nrf-802154
-      repo-path: sdk-nrf-802154
-      path: nrf-802154
-      revision: a147927cf8ed43831dc2d8003017be8306724d61
-      groups:
-      - nrf-802154
     # Other third-party repositories.
     - name: cmock
       path: test/cmock
@@ -154,24 +141,10 @@ manifest:
       path: modules/alexa-embedded
       revision: face92d8c62184832793f518bb1f19379538c5c1
       remote: alexa
-    - name: mbed-cloud-client
-      path: modules/lib/pelion-dm
-      revision: 4.9.0
-      remote: pelioniot
     - name: cddl-gen
       remote: nordicsemi
       revision: 24f1b2b0c64c694b7f9ac1b7eab60b39236ca0bf
       path: modules/lib/cddl-gen
-    - name: homekit
-      repo-path: sdk-homekit
-      revision: 4b637f0f8cd0e9881c238d10b4121b3712c5ba0d
-      groups:
-      - homekit
-    - name: find-my
-      repo-path: sdk-find-my
-      revision: 07c8d591b47c4c3609f29871be031c9af39401e1
-      groups:
-      - find-my
 
   # West-related configuration for the nrf repository.
   self:
