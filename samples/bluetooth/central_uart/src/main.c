@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2018 Nordic Semiconductor ASA
  *
- * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+ * SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
  */
 
 /** @file
@@ -33,20 +33,30 @@
 #define LOG_MODULE_NAME central_uart
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
+//#define NO_RX
+
 /* UART payload buffer element size. */
-#define UART_BUF_SIZE 20
+#define UART_BUF_SIZE 174
 
 #define KEY_PASSKEY_ACCEPT DK_BTN1_MSK
 #define KEY_PASSKEY_REJECT DK_BTN2_MSK
 
 #define NUS_WRITE_TIMEOUT K_MSEC(150)
-#define UART_WAIT_FOR_BUF_DELAY K_MSEC(50)
-#define UART_RX_TIMEOUT 50
+#define UART_WAIT_FOR_BUF_DELAY K_MSEC(5)
+#define UART_RX_TIMEOUT 5
+
+#define INTERVAL_MIN 	80	/* 320 units, 400 ms */
+#define INTERVAL_MAX	80	/* 320 units, 400 ms */
+
+static struct bt_le_conn_param *conn_param =
+	BT_LE_CONN_PARAM(INTERVAL_MIN, INTERVAL_MAX, 0, 400);
 
 static const struct device *uart;
 static struct k_delayed_work uart_work;
 
+
 K_SEM_DEFINE(nus_write_sem, 0, 1);
+K_SEM_DEFINE(bt_connected_sem, 0, 1);
 
 struct uart_data_t {
 	void *fifo_reserved;
@@ -60,13 +70,14 @@ static K_FIFO_DEFINE(fifo_uart_rx_data);
 static struct bt_conn *default_conn;
 static struct bt_nus_client nus_client;
 
+
 static void ble_data_sent(uint8_t err, const uint8_t *const data, uint16_t len)
 {
-	struct uart_data_t *buf;
+	//struct uart_data_t *buf;
 
 	/* Retrieve buffer context. */
-	buf = CONTAINER_OF(data, struct uart_data_t, data);
-	k_free(buf);
+	//buf = CONTAINER_OF(data, struct uart_data_t, data);
+	//k_free(buf);
 
 	k_sem_give(&nus_write_sem);
 
@@ -75,8 +86,21 @@ static void ble_data_sent(uint8_t err, const uint8_t *const data, uint16_t len)
 	}
 }
 
+//#define HANDLE_DATA
+
 static uint8_t ble_data_received(const uint8_t *const data, uint16_t len)
 {
+
+	#ifndef HANDLE_DATA
+
+	static int recv_cnt=0;
+	recv_cnt++;
+
+	if (!(recv_cnt%100)) {
+		printk("BLE: has received %d messages\n", recv_cnt);
+	}
+	#elif defined(HANDLE_DATA)
+
 	int err;
 
 	for (uint16_t pos = 0; pos != len;) {
@@ -110,9 +134,12 @@ static uint8_t ble_data_received(const uint8_t *const data, uint16_t len)
 
 		err = uart_tx(uart, tx->data, tx->len, SYS_FOREVER_MS);
 		if (err) {
+			LOG_WRN("UART_TX: error %d\n", err);
 			k_fifo_put(&fifo_uart_tx_data, tx);
 		}
 	}
+
+	#endif
 
 	return BT_GATT_ITER_CONTINUE;
 }
@@ -159,6 +186,9 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 		break;
 
 	case UART_RX_RDY:
+
+		#ifndef NO_RX
+
 		buf = CONTAINER_OF(evt->data.rx.buf, struct uart_data_t, data);
 		buf->len += evt->data.rx.len;
 		buf_release = false;
@@ -173,9 +203,12 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 			uart_rx_disable(uart);
 		}
 
+		#endif
+
 		break;
 
 	case UART_RX_DISABLED:
+		#ifndef NO_RX
 		buf = k_malloc(sizeof(*buf));
 		if (buf) {
 			buf->len = 0;
@@ -188,10 +221,14 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 
 		uart_rx_enable(uart, buf->data, sizeof(buf->data),
 			       UART_RX_TIMEOUT);
+		#endif
 
 		break;
 
 	case UART_RX_BUF_REQUEST:
+
+		#ifndef NO_RX
+
 		buf = k_malloc(sizeof(*buf));
 		if (buf) {
 			buf->len = 0;
@@ -200,9 +237,14 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 			LOG_WRN("Not able to allocate UART receive buffer");
 		}
 
+		#endif
+
 		break;
 
 	case UART_RX_BUF_RELEASED:
+
+		#ifndef NO_RX
+
 		buf = CONTAINER_OF(evt->data.rx_buf.buf, struct uart_data_t,
 				   data);
 		if (buf_release && (current_buf != evt->data.rx_buf.buf)) {
@@ -210,6 +252,8 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 			buf_release = false;
 			current_buf = NULL;
 		}
+
+		#endif
 
 		break;
 
@@ -277,6 +321,7 @@ static int uart_init(void)
 			      UART_RX_TIMEOUT);
 }
 
+
 static void discovery_complete(struct bt_gatt_dm *dm,
 			       void *context)
 {
@@ -289,6 +334,8 @@ static void discovery_complete(struct bt_gatt_dm *dm,
 	bt_nus_subscribe_receive(nus);
 
 	bt_gatt_dm_data_release(dm);
+
+	k_sem_give(&bt_connected_sem);
 }
 
 static void discovery_service_not_found(struct bt_conn *conn,
@@ -467,6 +514,7 @@ static int scan_init(void)
 	int err;
 	struct bt_scan_init_param scan_init = {
 		.connect_if_match = 1,
+		.conn_param = conn_param
 	};
 
 	bt_scan_init(&scan_init);
@@ -539,6 +587,8 @@ static struct bt_conn_auth_cb conn_auth_callbacks = {
 	.pairing_failed = pairing_failed
 };
 
+#define SEND_FAST
+
 void main(void)
 {
 	int err;
@@ -570,6 +620,8 @@ void main(void)
 		}
 	}
 
+	uart_rx_disable(uart);
+
 	printk("Starting Bluetooth Central UART example\n");
 
 
@@ -581,17 +633,21 @@ void main(void)
 
 	LOG_INF("Scanning successfully started");
 
+	k_sem_take(&bt_connected_sem, K_FOREVER);
+	LOG_INF("Start sending\n");
+	int msg_cnt=0;
 	for (;;) {
-		/* Wait indefinitely for data to be sent over Bluetooth */
-		struct uart_data_t *buf = k_fifo_get(&fifo_uart_rx_data,
-						     K_FOREVER);
-
-		err = bt_nus_client_send(&nus_client, buf->data, buf->len);
+		
+		err = bt_nus_client_send(&nus_client, "012345678", 10);
 		if (err) {
 			LOG_WRN("Failed to send data over BLE connection"
 				"(err %d)", err);
-		}
-
+		} else {
+			msg_cnt++;
+			if (!(msg_cnt%100)) {
+				LOG_INF("%d messages sucessfully transmitted.\n", msg_cnt);
+			}
+		}	
 		err = k_sem_take(&nus_write_sem, NUS_WRITE_TIMEOUT);
 		if (err) {
 			LOG_WRN("NUS send timeout");

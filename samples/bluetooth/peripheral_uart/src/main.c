@@ -55,7 +55,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 uint8_t * testData = "yK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQ"
 					 "yK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK3vQHgUQyK";
 
-#define TEST_DATA_SIZE 30
+#define TEST_DATA_SIZE 174
 
 
 static K_SEM_DEFINE(ble_init_ok, 0, 1);
@@ -256,6 +256,8 @@ static void exchange_func(struct bt_conn *conn, uint8_t att_err,
 			  struct bt_gatt_exchange_params *params)
 {
 	printk("MTU exchange %s\n", att_err == 0 ? "successful" : "failed");
+
+	k_sem_give(&sensor_start_sem);
 }
 
 static void connected(struct bt_conn *conn, uint8_t err)
@@ -585,7 +587,6 @@ void ble_write_thread(void)
 		printk("MTU exchange pending\n");
 	}
 
-	k_sem_give(&sensor_start_sem);
 
 	int msg_cnt = 0;	
 	printk("BLE start");
@@ -621,6 +622,11 @@ void sensor_simulator(void) {
 		bleDataPtr->len = TEST_DATA_SIZE;
 		memcpy(bleDataPtr->data, testData, TEST_DATA_SIZE);
 		k_fifo_put(&fifo_ble_tx_data, bleDataPtr);
+
+		struct ble_data_t *bleDataPtr2 = k_malloc(sizeof(struct ble_data_t));
+		bleDataPtr->len = TEST_DATA_SIZE;
+		memcpy(bleDataPtr2->data, testData, TEST_DATA_SIZE);
+		k_fifo_put(&fifo_ble_tx_data, bleDataPtr2);
 
 		LOG_DBG("Sensor data put");
 
