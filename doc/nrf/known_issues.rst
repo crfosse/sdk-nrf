@@ -19,7 +19,11 @@ Use the drop-down filter to see known issues for previous releases and check if 
 
    <select name="versions" id="versions-select">
      <option value="all">All versions</option>
+<<<<<<< HEAD
 	 <option value="v1-5-1" selected>v1.5.1</option>
+=======
+     <option value="v1-5-1" selected>v1.5.1</option>
+>>>>>>> b87c7e847... doc: Update known issues for 1.5.1
      <option value="v1-5-0">v1.5.0</option>
      <option value="v1-4-2">v1.4.2</option>
      <option value="v1-4-1">v1.4.1</option>
@@ -183,11 +187,14 @@ nRF5
 nRF5340
 =======
 
+<<<<<<< HEAD
 .. rst-class:: v1-5-1 v1-5-0 v1-4-2 v1-4-1 v1-4-0
 
 NCSDK-7234: UART output is not received from the network core
   The UART output is not received from the network core if the application core is programmed and running with a non-secure image (using the ``nrf5340dk_nrf5340_cpuappns`` build target).
 
+=======
+>>>>>>> b87c7e847... doc: Update known issues for 1.5.1
 .. rst-class:: v1-5-1 v1-5-0
 
 KRKNWK-6756: 802.15.4 Service Layer (SL) library support for the nRF53
@@ -298,7 +305,11 @@ Zigbee
 KRKNWK-8478: NCP host application crash on exceeding :c:macro:`TX_BUFFERS_POOL_SIZE`
   If the NCP host application exceeds the :c:macro:`TX_BUFFERS_POOL_SIZE` pending requests, the application will crash on an assertion.
 
+<<<<<<< HEAD
    **Workaround**: Increase the value of :c:macro:`TX_BUFFERS_POOL_SIZE` or define shorter polling interval (:c:macro:`NCP_TRANSPORT_REFRESH_TIME`).
+=======
+  **Workaround**: Increase the value of :c:macro:`TX_BUFFERS_POOL_SIZE` or define shorter polling interval (:c:macro:`NCP_TRANSPORT_REFRESH_TIME`).
+>>>>>>> b87c7e847... doc: Update known issues for 1.5.1
 
 .. rst-class:: v1-5-1
 
@@ -421,21 +432,35 @@ KRKNWK-7836: Coordinator asserting when flooded with ZDO commands
 KRKNWK-6073: Potential delay during FOTA
   There might be a noticeable delay (~220 ms) between calling the ZBOSS API and on-the-air activity.
 
+<<<<<<< HEAD
 Matter (Project CHIP)
 =====================
+=======
+Project Connected Home over IP (Project CHIP)
+=============================================
+>>>>>>> b87c7e847... doc: Update known issues for 1.5.1
 
 .. rst-class:: v1-5-1 v1-5-0
 
 KRKNWK-9214: Pigweed submodule may not be accessible from some regions
   The ``west update`` command may generate log notifications about the failure to access the pigweed submodule.
+<<<<<<< HEAD
   As a result, the Matter samples will not build.
+=======
+  As a result, the Project CHIP samples will not build.
+>>>>>>> b87c7e847... doc: Update known issues for 1.5.1
 
   **Workaround:** Execute the following commands in the root folder:
 
     .. code-block::
 
+<<<<<<< HEAD
        git -C modules/lib/matter submodule set-url third_party/pigweed/repo https://github.com/google/pigweed.git
        git -C modules/lib/matter submodule sync third_party/pigweed/repo
+=======
+       git -C modules/lib/connectedhomeip submodule set-url third_party/pigweed/repo https://github.com/google/pigweed.git
+       git -C modules/lib/connectedhomeip submodule sync third_party/pigweed/repo
+>>>>>>> b87c7e847... doc: Update known issues for 1.5.1
        west update
 
 nRF Desktop
@@ -466,6 +491,7 @@ Subsystems
 Bluetooth LE
 ============
 
+<<<<<<< HEAD
 .. rst-class:: v1-5-1 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0 v1-1-0 v1-0-0
 
 NCSDK-9106: Bluetooth ECC thread stack size too small
@@ -473,6 +499,8 @@ NCSDK-9106: Bluetooth ECC thread stack size too small
 
   **Workaround:** Increase the ECC stack size by setting :option:`CONFIG_BT_HCI_ECC_STACK_SIZE` to ``1140``.
 
+=======
+>>>>>>> b87c7e847... doc: Update known issues for 1.5.1
 .. rst-class:: v1-5-0 v1-4-2 v1-4-1 v1-4-0
 
 DRGN-15435: GATT notifications and Writes Without Response might be sent out of order
@@ -489,7 +517,11 @@ DRGN-15448: Incomplete bond overwrite during pairing procedure when peer is not 
 .. rst-class:: v1-5-1 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0 v1-1-0 v1-0-0
 
 NCSDK-8321: NUS shell transport sample does not display the initial shell prompt *uart:~$* on the remote terminal.
+<<<<<<< HEAD
   Also few logs with sending errors are displayed on the terminal connected directly to the DK.
+=======
+  Also, few logs with sending errors are displayed on the terminal connected directly to the DK.
+>>>>>>> b87c7e847... doc: Update known issues for 1.5.1
   This issue is caused by the shell being enabled before turning on the notifications for the NUS service by the remote peer.
 
   **Workaround:** Enable the shell after turning on the NUS notifications or block it until turning on the notifications.
@@ -1007,6 +1039,25 @@ DRGN-15475: Samples might not initialize the SoftDevice Controller HCI driver co
 
 .. rst-class:: v1-5-0
 
+DRGN-15465: Corrupted advertising data when :option:`CONFIG_BT_EXT_ADV` is set
+  Setting scan response data for a legacy advertiser on a build with extended advertising support corrupts parts of the advertising data.
+  When using ``BT_LE_ADV_OPT_USE_NAME`` (which is the default configuration in most samples), the device name is put in the scan response.
+  This corrupts the advertising data.
+
+  **Workaround:** Do not set scan response data.
+  That implies not using the ``BT_LE_ADV_OPT_USE_NAME`` option, or the :c:macro:`BT_LE_ADV_CONN_NAME` macro when initializing Bluetooth.
+  Instead, use :c:macro:`BT_LE_ADV_CONN`, and if necessary set the device name in the advertising data manually.
+
+.. rst-class:: v1-5-1 v1-5-0
+
+DRGN-15475: Samples might not initialize the SoftDevice Controller HCI driver correctly
+  Samples using both the advertising and the scanning state, but not the connected state, fail to initialize the SoftDevice Controller HCI driver.
+  As a result, the function :c:func:`bt_enable()` returns an error code.
+
+  **Workaround:** Manually enable :option:`CONFIG_SOFTDEVICE_CONTROLLER_MULTIROLE` for the project configuration.
+
+.. rst-class:: v1-5-0
+
 DRGN-15382: The SoftDevice Controller cannot be qualified on nRF52832
   The SoftDevice Controller cannot be qualified on nRF52832.
 
@@ -1026,6 +1077,19 @@ DRGN-11963: LL control procedures cannot be initiated at the same time
 
   **Workaround:** Do not initiate these procedures at the same time.
 
+<<<<<<< HEAD
+=======
+.. rst-class:: v1-5-1 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0 v1-1-0 v1-0-0
+
+DRGN-8476: Long packets not supported in connections on Coded PHY
+  In connections, the Link Layer payload size is limited to 27 bytes on LE Coded PHY.
+
+.. rst-class:: v1-5-1 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0 v1-1-0 v1-0-0
+
+DRGN-9083: AAR populated with zero IRK
+  If the application has set an all zeroes IRK for a device in the resolving list, then a resolvable address that can be resolved with the all zeroes IRK will be reported to the application as that device in the advertisement report or the connected event.
+
+>>>>>>> b87c7e847... doc: Update known issues for 1.5.1
 .. rst-class:: v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0 v1-1-0 v1-0-0
 
 DRGN-13921: Directed advertising issues using RPA in TargetA
@@ -1033,11 +1097,53 @@ DRGN-13921: Directed advertising issues using RPA in TargetA
 
   **Workaround:** Remove the device address from the resolving list.
 
+<<<<<<< HEAD
 .. rst-class::  v1-5-1 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0 v1-1-0 v1-0-0
+=======
+.. rst-class:: v1-5-1 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0 v1-1-0 v1-0-0
+
+DRGN-11297: Maximum CI before entering LLPM-mode
+  The maximum connection interval that can be active when switching to a connection interval of 1 ms is 10 ms.
+
+  **Workaround:** An application that needs to use a higher interval than 10 ms needs to perform two connection updates to use 1 ms connection interval:
+
+  * A first update to 10 ms connection interval.
+  * A second update to 1 ms connection interval.
+
+.. rst-class:: v1-5-1 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0 v1-1-0 v1-0-0
+
+DRGN-10305: Scanner can't have more than 16 seconds scan window
+  If the scanner is configured with a scan window larger than 16 seconds, the scanner will truncate the scan window to 16 seconds.
+
+.. rst-class:: v1-5-1 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0 v1-1-0 v1-0-0
+
+DRGN-8569: SEVONPEND flag must not be modified
+  Applications must not modify the SEVONPEND flag in the SCR register when running in priority levels higher than 6 (priority level numerical values lower than 6) as this can lead to undefined behavior.
+
+.. rst-class:: v1-5-1 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0
+
+DRGN-6362: Synthesized low frequency clock source not tested
+  Synthesized low frequency clock source is not tested or intended for use with the Bluetooth LE stack.
+
+.. rst-class:: v1-5-1 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0 v1-1-0 v1-0-0
+>>>>>>> b87c7e847... doc: Update known issues for 1.5.1
 
 DRGN-10367: Advertiser times out earlier than expected
   If an extended advertiser is configured with limited duration, it will time out after the first primary channel packet in the last advertising event.
 
+<<<<<<< HEAD
+=======
+.. rst-class:: v1-5-1 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0 v1-1-0 v1-0-0
+
+DRGN-12259: HCI Receiver and Transmitter Test commands not available
+  The HCI Receiver and Transmitter Test commands are not available.
+
+  **Workaround:** To perform a radio test, use a DTM application:
+
+  * For nRF52, use the DTM application in the nRF5 SDK.
+  * For nRF53, use :ref:`direct_test_mode`.
+
+>>>>>>> b87c7e847... doc: Update known issues for 1.5.1
 .. rst-class:: v1-1-0
 
 :option:`CONFIG_BT_HCI_TX_STACK_SIZE` requires specific value
