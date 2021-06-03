@@ -1,0 +1,41 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+&uart1 {
+	current-speed = <115200>;
+	status = "okay";
+	tx-pin = <44>;
+	rx-pin = <45>;
+	/delete-property/ rts-pin;
+	/delete-property/ cts-pin;
+
+	lpuart: nrf-sw-lpuart {
+		compatible = "nordic,nrf-sw-lpuart";
+		status = "okay";
+		label = "LPUART";
+		req-pin = <46>;
+		rdy-pin = <47>;
+	};
+};
+
+/ {
+	chosen {
+		zephyr,bt-c2h-uart=&lpuart;
+	};
+};
+
+&spi3 {
+    status="disabled";
+};
+
+&spi1 {
+	status="disabled";
+};
+
+&i2c0 {
+	status="disabled";
+};
+
+/* Disabling uart rx pin to get low power */
+/*&uart0 {
+	/delete-property/ rx-pin;
+};*/
