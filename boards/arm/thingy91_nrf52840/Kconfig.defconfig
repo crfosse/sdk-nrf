@@ -19,4 +19,7 @@ config USB_DEVICE_STACK
 
 endif # USB
 
+config BT_CTLR
+    default BT
+
 endif # BOARD_THINGY91_NRF52840

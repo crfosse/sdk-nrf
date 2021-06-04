@@ -22,7 +22,16 @@
 #endif
 #include <dk_buttons_and_leds.h>
 
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/uuid.h>
+#include <bluetooth/gatt.h>
+#include <bluetooth/hci.h>
+#include <bluetooth/gatt_dm.h>
+#include <bluetooth/scan.h>
+
 #include "certificates.h"
+
+#define LTE_ON
 
 LOG_MODULE_REGISTER(mqtt_simple, CONFIG_MQTT_SIMPLE_LOG_LEVEL);
 
@@ -51,8 +60,7 @@ static int certificates_provision(void)
 
 	err = modem_key_mgmt_write(CONFIG_MQTT_TLS_SEC_TAG,
 				   MODEM_KEY_MGMT_CRED_TYPE_CA_CHAIN,
-				   CA_CERTIFICATE,
-				   strlen(CA_CERTIFICATE));
+				   CA_CERTIFICATE, strlen(CA_CERTIFICATE));
 	if (err) {
 		LOG_ERR("Failed to provision CA certificate: %d", err);
 		return err;
@@ -61,8 +69,7 @@ static int certificates_provision(void)
 #elif defined(CONFIG_BOARD_QEMU_X86) && defined(CONFIG_NET_SOCKETS_SOCKOPT_TLS)
 
 	err = tls_credential_add(CONFIG_MQTT_TLS_SEC_TAG,
-				 TLS_CREDENTIAL_CA_CERTIFICATE,
-				 CA_CERTIFICATE,
+				 TLS_CREDENTIAL_CA_CERTIFICATE, CA_CERTIFICATE,
 				 sizeof(CA_CERTIFICATE));
 	if (err) {
 		LOG_ERR("Failed to register CA certificate: %d", err);
@@ -151,8 +158,8 @@ static void data_print(uint8_t *prefix, uint8_t *data, size_t len)
 
 /**@brief Function to publish data on the configured topic
  */
-static int data_publish(struct mqtt_client *c, enum mqtt_qos qos,
-	uint8_t *data, size_t len)
+static int data_publish(struct mqtt_client *c, enum mqtt_qos qos, uint8_t *data,
+			size_t len)
 {
 	struct mqtt_publish_param param;
 
@@ -166,8 +173,7 @@ static int data_publish(struct mqtt_client *c, enum mqtt_qos qos,
 	param.retain_flag = 0;
 
 	data_print("Publishing: ", data, len);
-	LOG_INF("to topic: %s len: %u",
-		CONFIG_MQTT_PUB_TOPIC,
+	LOG_INF("to topic: %s len: %u", CONFIG_MQTT_PUB_TOPIC,
 		(unsigned int)strlen(CONFIG_MQTT_PUB_TOPIC));
 
 	return mqtt_publish(c, &param);
@@ -178,17 +184,13 @@ static int data_publish(struct mqtt_client *c, enum mqtt_qos qos,
 static int subscribe(void)
 {
 	struct mqtt_topic subscribe_topic = {
-		.topic = {
-			.utf8 = CONFIG_MQTT_SUB_TOPIC,
-			.size = strlen(CONFIG_MQTT_SUB_TOPIC)
-		},
+		.topic = { .utf8 = CONFIG_MQTT_SUB_TOPIC,
+			   .size = strlen(CONFIG_MQTT_SUB_TOPIC) },
 		.qos = MQTT_QOS_1_AT_LEAST_ONCE
 	};
 
 	const struct mqtt_subscription_list subscription_list = {
-		.list = &subscribe_topic,
-		.list_count = 1,
-		.message_id = 1234
+		.list = &subscribe_topic, .list_count = 1, .message_id = 1234
 	};
 
 	LOG_INF("Subscribing to: %s len %u", CONFIG_MQTT_SUB_TOPIC,
@@ -210,8 +212,7 @@ static int publish_get_payload(struct mqtt_client *c, size_t length)
 
 /**@brief MQTT client event handler
  */
-void mqtt_evt_handler(struct mqtt_client *const c,
-		      const struct mqtt_evt *evt)
+void mqtt_evt_handler(struct mqtt_client *const c, const struct mqtt_evt *evt)
 {
 	int err;
 
@@ -233,8 +234,8 @@ void mqtt_evt_handler(struct mqtt_client *const c,
 	case MQTT_EVT_PUBLISH: {
 		const struct mqtt_publish_param *p = &evt->param.publish;
 
-		LOG_INF("MQTT PUBLISH result=%d len=%d",
-			evt->result, p->message.payload.len);
+		LOG_INF("MQTT PUBLISH result=%d len=%d", evt->result,
+			p->message.payload.len);
 		err = publish_get_payload(c, p->message.payload.len);
 
 		if (p->message.topic.qos == MQTT_QOS_1_AT_LEAST_ONCE) {
@@ -248,10 +249,10 @@ void mqtt_evt_handler(struct mqtt_client *const c,
 
 		if (err >= 0) {
 			data_print("Received: ", payload_buf,
-				p->message.payload.len);
+				   p->message.payload.len);
 			/* Echo back received data */
 			data_publish(&client, MQTT_QOS_1_AT_LEAST_ONCE,
-				payload_buf, p->message.payload.len);
+				     payload_buf, p->message.payload.len);
 		} else {
 			LOG_ERR("publish_get_payload failed: %d", err);
 			LOG_INF("Disconnecting MQTT client...");
@@ -301,10 +302,8 @@ static int broker_init(void)
 	int err;
 	struct addrinfo *result;
 	struct addrinfo *addr;
-	struct addrinfo hints = {
-		.ai_family = AF_INET,
-		.ai_socktype = SOCK_STREAM
-	};
+	struct addrinfo hints = { .ai_family = AF_INET,
+				  .ai_socktype = SOCK_STREAM };
 
 	err = getaddrinfo(CONFIG_MQTT_BROKER_HOSTNAME, NULL, &hints, &result);
 	if (err) {
@@ -324,12 +323,12 @@ static int broker_init(void)
 
 			broker4->sin_addr.s_addr =
 				((struct sockaddr_in *)addr->ai_addr)
-				->sin_addr.s_addr;
+					->sin_addr.s_addr;
 			broker4->sin_family = AF_INET;
 			broker4->sin_port = htons(CONFIG_MQTT_BROKER_PORT);
 
-			inet_ntop(AF_INET, &broker4->sin_addr.s_addr,
-				  ipv4_addr, sizeof(ipv4_addr));
+			inet_ntop(AF_INET, &broker4->sin_addr.s_addr, ipv4_addr,
+				  sizeof(ipv4_addr));
 			LOG_INF("IPv4 Address found %s", log_strdup(ipv4_addr));
 
 			break;
@@ -448,8 +447,8 @@ static int client_init(struct mqtt_client *client)
 
 #if defined(CONFIG_NRF_MODEM_LIB)
 	tls_cfg->session_cache = IS_ENABLED(CONFIG_MQTT_TLS_SESSION_CACHING) ?
-					    TLS_SESSION_CACHE_ENABLED :
-					    TLS_SESSION_CACHE_DISABLED;
+					       TLS_SESSION_CACHE_ENABLED :
+					       TLS_SESSION_CACHE_DISABLED;
 #else
 	/* TLS session caching is not supported by the Zephyr network stack */
 	tls_cfg->session_cache = TLS_SESSION_CACHE_DISABLED;
@@ -489,10 +488,9 @@ static void button_handler(uint32_t button_states, uint32_t has_changed)
 	    BIT(CONFIG_BUTTON_EVENT_BTN_NUM - 1)) {
 		int ret;
 
-		ret = data_publish(&client,
-				   MQTT_QOS_1_AT_LEAST_ONCE,
+		ret = data_publish(&client, MQTT_QOS_1_AT_LEAST_ONCE,
 				   CONFIG_BUTTON_EVENT_PUBLISH_MSG,
-				   sizeof(CONFIG_BUTTON_EVENT_PUBLISH_MSG)-1);
+				   sizeof(CONFIG_BUTTON_EVENT_PUBLISH_MSG) - 1);
 		if (ret) {
 			LOG_ERR("Publish failed: %d", ret);
 		}
@@ -540,8 +538,161 @@ static int modem_configure(void)
 #endif /* defined(CONFIG_LWM2M_CARRIER) */
 	}
 #endif /* defined(CONFIG_LTE_LINK_CONTROL) */
-
 	return 0;
+}
+
+#define BT_ADDR  "06:09:16"
+
+#define ADV_BUF_SIZE 128
+
+static atomic_t ready;
+static atomic_t active;
+
+bool bt_parse_cb(struct bt_data *data, void *user_data) {
+
+	LOG_INF("Parsed adv -- Type: %d", data->type);
+	return true;
+}
+
+void scan_filter_match(struct bt_scan_device_info *device_info,
+		       struct bt_scan_filter_match *filter_match,
+		       bool connectable)
+{
+	char addr[BT_ADDR_LE_STR_LEN];
+
+	bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
+
+	int ret = !strncmp(BT_ADDR, addr, 9);
+
+	if(!ret) {
+		LOG_INF("Device found: %s", log_strdup(addr));
+
+		bt_data_parse(device_info->adv_data, bt_parse_cb, (void *)addr);
+	} else {
+		LOG_INF("Not a relevant address: %d", ret);
+	}
+}
+
+void scan_connecting_error(struct bt_scan_device_info *device_info)
+{
+	LOG_ERR("Connection to peer failed!");
+}
+
+bool bt_parse_cb_nomatch(struct bt_data *data, void *user_data) {
+
+	//LOG_INF("Device found: %s", log_strdup(user_data));
+
+	char buffer[ADV_BUF_SIZE];
+
+	switch(data->type) 
+	{
+		case BT_DATA_NAME_COMPLETE:
+
+			memcpy(buffer, data->data, data->data_len);
+			if(!strncmp("47:05:9B",buffer,data->data_len)) {
+				char addr_str_le[BT_ADDR_LE_STR_LEN];
+				bt_addr_le_to_str(user_data, addr_str_le, BT_ADDR_LE_STR_LEN);
+				LOG_INF("Got LE address: %s ", log_strdup(addr_str_le));
+			}
+
+			break;
+
+		default:
+			//nothing here
+			break;
+	}
+
+	return true;
+}
+
+void scan_filter_no_match(struct bt_scan_device_info *device_info,bool connectable) {
+
+	
+	bt_data_parse(device_info->adv_data, bt_parse_cb_nomatch, (void *)device_info->recv_info->addr);
+
+}
+
+BT_SCAN_CB_INIT(scan_cb, scan_filter_match, scan_filter_no_match, scan_connecting_error, NULL);
+
+static void scan_stop(void)
+{
+	int err;
+
+	LOG_INF("Stopping scan");
+
+	err = bt_le_scan_stop();
+	if (err) {
+		LOG_ERR("bt_le_scan_stop: %d", err);
+	} else {
+		LOG_INF("STANDBY");
+	}
+}
+
+static void scan_start(void)
+{
+	int err;
+
+	struct bt_le_scan_param scan_param = {
+		.type = BT_LE_SCAN_TYPE_ACTIVE,
+		.options = BT_LE_SCAN_OPT_NONE,
+		.interval = 0x0010,
+		.window = 0x0010,
+	};
+
+	struct bt_scan_init_param scan_init = {
+		.connect_if_match = 0,
+		.scan_param = &scan_param,
+		.conn_param = NULL,
+	};
+
+	bt_scan_init(&scan_init);
+	bt_scan_cb_register(&scan_cb);
+
+	//err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_UUID, BT_UUID_THINGY);
+	//if (err) {
+	//	LOG_ERR("UUID scanning filters cannot be set");
+	//	return;
+	//}
+	
+	static const uint16_t manufacturer_id = 0x028d;
+    struct bt_scan_manufacturer_data id_filter;
+    id_filter.data = (uint8_t*) &manufacturer_id;
+    id_filter.data_len = 2;
+
+	err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_MANUFACTURER_DATA, &id_filter);
+	if (err) {
+		LOG_ERR("MANUFACTURER scanning filters cannot be set");
+		return;
+	}
+
+	err = bt_scan_filter_enable(BT_SCAN_MANUFACTURER_DATA_FILTER, false);
+	if (err) {
+		LOG_ERR("Filters cannot be turned on");
+	}
+
+	err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
+	if (err) {
+		LOG_ERR("Scanning failed to start, err %d", err);
+	}
+
+
+	LOG_INF("Scanning...");
+}
+
+static void bt_ready(int err)
+{
+	if (err) {
+		LOG_ERR("%s: %d", __func__, err);
+		return;
+	}
+
+	atomic_set(&ready, true);
+
+	atomic_set(&active, true);
+
+	if (atomic_get(&active)) {
+		scan_start();
+	}
 }
 
 void main(void)
@@ -559,6 +710,7 @@ void main(void)
 	}
 #endif /* defined(CONFIG_MQTT_LIB_TLS) */
 
+#ifdef LTE_ON
 	do {
 		err = modem_configure();
 		if (err) {
@@ -573,11 +725,18 @@ void main(void)
 		LOG_ERR("client_init: %d", err);
 		return;
 	}
+#endif
 
 #if defined(CONFIG_DK_LIBRARY)
 	dk_buttons_init(button_handler);
 #endif
 
+	err = bt_enable(bt_ready);
+	if (err) {
+		LOG_ERR("bt_enable: %d", err);
+	}
+
+#ifdef LTE_ON
 do_connect:
 	if (connect_attempt++ > 0) {
 		LOG_INF("Reconnecting in %d seconds...",
@@ -635,4 +794,10 @@ do_connect:
 		LOG_ERR("Could not disconnect MQTT client: %d", err);
 	}
 	goto do_connect;
+	#else
+	while (1) {
+		//DO_NOTHING
+		k_sleep(K_MSEC(100));
+	}
+	#endif
 }
