@@ -548,8 +548,11 @@ static int modem_configure(void)
 	return 0;
 }
 
+<<<<<<< HEAD
 #ifdef WITH_BLE
 
+=======
+>>>>>>> 5d99f4dfa... Moved bee dev to master
 #define BT_ADDR  "06:09:16"
 
 #define ADV_BUF_SIZE 128
@@ -748,7 +751,6 @@ void main(void)
 #if defined(CONFIG_DK_LIBRARY)
 	dk_buttons_init(button_handler);
 #endif
-
 
 
 #ifdef LTE_ON
