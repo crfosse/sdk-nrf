@@ -22,7 +22,7 @@ int bt_hci_transport_setup(struct device *h4)
 	}
 
 	/* Configure pin as output and initialize it to low. */
-	err = gpio_pin_configure(port, RESET_PIN, GPIO_OUTPUT_LOW);
+	err = gpio_pin_configure(port, RESET_PIN, GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INACTIVE);
 	if (err) {
 		return err;
 	}
