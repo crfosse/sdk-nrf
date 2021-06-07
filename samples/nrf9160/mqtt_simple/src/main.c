@@ -22,12 +22,16 @@
 #endif
 #include <dk_buttons_and_leds.h>
 
+#ifdef WITH_BLE
+
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/gatt_dm.h>
 #include <bluetooth/scan.h>
+
+#endif
 
 #include "certificates.h"
 
@@ -541,6 +545,8 @@ static int modem_configure(void)
 	return 0;
 }
 
+#ifdef WITH_BLE
+
 #define BT_ADDR  "06:09:16"
 
 #define ADV_BUF_SIZE 128
@@ -695,6 +701,8 @@ static void bt_ready(int err)
 	}
 }
 
+#endif
+
 void main(void)
 {
 	int err;
@@ -731,10 +739,10 @@ void main(void)
 	dk_buttons_init(button_handler);
 #endif
 
-	err = bt_enable(bt_ready);
+	/*err = bt_enable(bt_ready);
 	if (err) {
 		LOG_ERR("bt_enable: %d", err);
-	}
+	}*/
 
 #ifdef LTE_ON
 do_connect:
