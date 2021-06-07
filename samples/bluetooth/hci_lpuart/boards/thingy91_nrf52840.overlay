@@ -30,6 +30,7 @@
 /* Disabling uart rx pin to get low power */
 &uart0 {
     compatible = "nordic,nrf-uart";
+	status = "disabled";
 	/delete-property/ rx-pin;
 	/delete-property/ rts-pin;
 	/delete-property/ cts-pin;
