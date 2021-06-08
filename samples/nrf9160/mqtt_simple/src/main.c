@@ -758,12 +758,16 @@ void main(void)
 #endif
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 	/*err = bt_enable(bt_ready);
 	if (err) {
 		LOG_ERR("bt_enable: %d", err);
 	}*/
 >>>>>>> 745aba26a... Changes to main
+=======
+
+>>>>>>> d77dce657... Found the bug and added temporary fix
 
 #ifdef LTE_ON
 do_connect:
