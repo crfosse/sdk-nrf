@@ -22,6 +22,10 @@
 #endif
 #include <dk_buttons_and_leds.h>
 
+
+#define LTE_ON
+#define WITH_BLE
+
 #ifdef WITH_BLE
 
 #include <bluetooth/bluetooth.h>
@@ -35,7 +39,6 @@
 
 #include "certificates.h"
 
-#define LTE_ON
 
 LOG_MODULE_REGISTER(mqtt_simple, CONFIG_MQTT_SIMPLE_LOG_LEVEL);
 
@@ -172,7 +175,7 @@ static int data_publish(struct mqtt_client *c, enum mqtt_qos qos, uint8_t *data,
 	param.message.topic.topic.size = strlen(CONFIG_MQTT_PUB_TOPIC);
 	param.message.payload.data = data;
 	param.message.payload.len = len;
-	param.message_id = sys_rand32_get();
+	param.message_id = k_cycle_get_32();
 	param.dup_flag = 0;
 	param.retain_flag = 0;
 
@@ -710,6 +713,13 @@ void main(void)
 
 	LOG_INF("The MQTT simple sample started");
 
+	#ifdef WITH_BLE
+		err = bt_enable(bt_ready);
+		if (err) {
+			LOG_ERR("bt_enable: %d", err);
+		}
+	#endif
+
 #if defined(CONFIG_MQTT_LIB_TLS)
 	err = certificates_provision();
 	if (err != 0) {
@@ -739,10 +749,7 @@ void main(void)
 	dk_buttons_init(button_handler);
 #endif
 
-	/*err = bt_enable(bt_ready);
-	if (err) {
-		LOG_ERR("bt_enable: %d", err);
-	}*/
+
 
 #ifdef LTE_ON
 do_connect:
