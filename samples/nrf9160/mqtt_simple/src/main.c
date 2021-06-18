@@ -548,16 +548,8 @@ static int modem_configure(void)
 	return 0;
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 #ifdef WITH_BLE
 
-=======
->>>>>>> 5d99f4dfa... Moved bee dev to master
-=======
-#ifdef WITH_BLE
-
->>>>>>> 745aba26a... Changes to main
 #define BT_ADDR  "06:09:16"
 
 #define ADV_BUF_SIZE 128
@@ -756,18 +748,6 @@ void main(void)
 #if defined(CONFIG_DK_LIBRARY)
 	dk_buttons_init(button_handler);
 #endif
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-	/*err = bt_enable(bt_ready);
-	if (err) {
-		LOG_ERR("bt_enable: %d", err);
-	}*/
->>>>>>> 745aba26a... Changes to main
-=======
-
->>>>>>> d77dce657... Found the bug and added temporary fix
 
 #ifdef LTE_ON
 do_connect:
