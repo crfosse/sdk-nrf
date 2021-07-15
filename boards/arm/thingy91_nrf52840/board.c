@@ -49,11 +49,9 @@ static int reset_pin_configure(const struct device *p0, const struct device *p1)
 	port = p0;
 	pin = 20;
 
-
-
 	__ASSERT_NO_MSG(port != NULL);
 
-	err = gpio_pin_configure(port, pin, GPIO_INPUT | GPIO_PULL_DOWN);
+	err = gpio_pin_configure(port, pin, GPIO_INPUT | GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH);
 	if (err) {
 		return err;
 	}
